@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSON to CSV Converter</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>JSON to CSV Converter</h1>
+      <label for="jsonInput">JSON Data:</label>
+      <textarea
+        id="jsonInput"
+        rows="10"
+        placeholder='Paste your JSON data here... (e.g., [{"name": "John", "age": 30}, {"name": "Jane", "age": 25}])'
+      ></textarea>
+
+      <label for="fileName">CSV File Name (without extension):</label>
+      <input
+        type="text"
+        id="fileName"
+        placeholder="Enter file name (e.g., data)"
+      />
+
+      <button onclick="convertToCSV()">Convert to CSV and Download</button>
+    </div>
+    <div class="footer">
+      <p>This tool allows you to convert JSON data into a CSV file easily.</p>
+    </div>
+
+    <script>
+      function convertToCSV() {
+        const jsonInput = document.getElementById("jsonInput").value;
+        let fileName = document.getElementById("fileName").value || "output";
+        fileName += ".csv"; // Append CSV extension automatically
+
+        try {
+          // Parse JSON input
+          const jsonData = JSON.parse(jsonInput);
+
+          // Convert JSON to CSV
+          const headers = Object.keys(jsonData[0]); // Extract headers from first object
+          const csvRows = [headers.join(",")]; // Add headers to CSV rows
+
+          jsonData.forEach((row) => {
+            const values = headers.map((header) => `"${row[header]}"`); // Quote each value
+            csvRows.push(values.join(","));
+          });
+
+          const csvContent = csvRows.join("\n");
+
+          // Create a blob and trigger download
+          const blob = new Blob([csvContent], { type: "text/csv" });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        } catch (error) {
+          alert("Invalid JSON format. Please check your input.");
+        }
+      }
+    </script>
+  </body>
+</html>
