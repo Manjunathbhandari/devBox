@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTML to CSV Converter</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>HTML to CSV Converter</h1>
+      <label for="htmlInput">HTML Table Code:</label>
+      <textarea
+        id="htmlInput"
+        rows="10"
+        placeholder="Paste your HTML table code here..."
+      ></textarea>
+
+      <label for="fileName">CSV File Name (without extension):</label>
+      <input
+        type="text"
+        id="fileName"
+        placeholder="Enter file name (e.g., data)"
+      />
+
+      <button onclick="convertToCSV()">Convert to CSV and Download</button>
+    </div>
+    <div class="footer">
+      <p>
+        Default save folder: <strong>D:\data_analysis\Scrapped Data</strong>
+      </p>
+    </div>
+
+    <script>
+      // Automatically format HTML on paste
+      document
+        .getElementById("htmlInput")
+        .addEventListener("paste", (event) => {
+          event.preventDefault();
+
+          // Retrieve pasted text
+          const pastedText = (
+            event.clipboardData || window.clipboardData
+          ).getData("text");
+
+          // Format the pasted HTML
+          const formattedHTML = formatHTML(pastedText);
+
+          // Set the formatted HTML back into the textarea
+          event.target.value = formattedHTML;
+        });
+
+      // Function to format HTML
+      function formatHTML(html) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        return prettyPrint(doc.body.innerHTML.trim());
+      }
+
+      // Function to pretty-print HTML
+      function prettyPrint(html) {
+        const lines = [];
+        let indentLevel = 0;
+
+        html.split(/>\s*</).forEach((element) => {
+          if (element.match(/^\/\w/)) indentLevel--; // Closing tag
+          lines.push("  ".repeat(indentLevel) + `<${element}>`);
+          if (element.match(/^<?\w[^>]*[^/]$/) && !element.startsWith("!--"))
+            indentLevel++; // Opening tag
+        });
+
+        return lines.join("\n");
+      }
+
+      // Convert to CSV logic
+      function convertToCSV() {
+        const htmlContent = document.getElementById("htmlInput").value;
+        let fileName = document.getElementById("fileName").value || "output";
+        fileName += ".csv"; // Automatically append ".csv"
+
+        // Parse the HTML content
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlContent, "text/html");
+        const table = doc.querySelector("table");
+        if (!table) {
+          alert("No table found in the provided HTML content.");
+          return;
+        }
+
+        // Convert table rows and cells to CSV format
+        const rows = Array.from(table.rows);
+        const csvContent = rows
+          .map((row) => {
+            const cells = Array.from(row.cells);
+            return cells
+              .map((cell) => `"${cell.textContent.trim()}"`)
+              .join(",");
+          })
+          .join("\n");
+
+        // Create a blob and initiate download
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    </script>
+  </body>
+</html>
